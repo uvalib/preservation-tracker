@@ -7,6 +7,9 @@
     <script src="js/jquery-2.1.3.js"></script>
     <script src="js/jquery-ui.js"></script>
     <script src="js/bootstrap.js"></script>
+    <script type="text/javascript" src="js/vis.js"></script>
+
+    <link href="css/vis.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/main.css">
 
@@ -14,7 +17,9 @@
 
         var profileList;
 
-         $(document).ready(function(){$("#search").click(function(){
+         $(document).ready( function(){ $("#search").click(doSearch) });
+         
+         function doSearch() {
             $('#result').empty();
             $('#result').append("Searching...");
             $.ajax({ url: "service/item/" + $('#query').val(),
@@ -23,17 +28,29 @@
                     $('#result').empty();
                     var result = '<dl>';
                     for (var i = 0; i < json.length; i ++) {
+                        result += '<div class="item">';
                         for (var key in json[i]) {
                             result += getElementHtml(key, json[i][key]);
                         }
+                        result += '<div id="vis_' + i + '" style="width: 100%; height: 500px"></div>';
+                        result += '</div>';
                     }
                     result += '</dl>';
                     $('#result').append($(result));
+                    for (var i = 0; i < json.length; i ++) {
+                      var network = new vis.Network(document.getElementById('vis_' + i), { nodes: json[i]._graph_nodes, edges: json[i]._graph_edges }, {});
+                      network.on("doubleClick", function(params) {
+                        if (params.nodes.length == 1) {
+                            $('#query').val(params.nodes[0]);
+                            doSearch();
+                        }
+                      });
+                    }
                 }});
-        });
-        });
+        }
         
         function getElementHtml(label, element) {
+            if (label.startsWith("_")) return "";
             var result = '<dt>' + label + '</dt>';
             if ("object" != typeof element) {
                 result += '<dd>' + element + '</dd>';
@@ -43,9 +60,9 @@
                         result += '<dd>' + element[i] + '</dd>';
                     }
                 } else { 
-                    result += '<dd><ul>';
+                    result += '<dd><ul class="list-group">';
                     for (var i = 0; i < element.length; i ++) {
-                        result += '<li><dl>';
+                        result += '<li class="list-group-item"><dl>';
                         for (var key in element[i]) {
                             result += getElementHtml(key, element[i][key])
                         }
@@ -67,11 +84,29 @@
 
 </head>
 <body>
-  <div class="form">
-    <input type="text" id="query" /><button type="button" id="search">Look up ID</button>
+  <div class="container">
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Track an Item</h3>
   </div>
+  <div class="panel-body">
+    <div class="row">
+    <div class="col-lg-6">
+      <div class="input-group">
+        <input type="text" id="query" class="form-control" placeholder="Enter an item id...">
+        <span class="input-group-btn">
+          <button id="search" class="btn btn-default" type="button">Find It!</button>
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  </div>
+</div>
   <div class="container">
     <div id="result" />
+  </div>
   </div>
 </body>
 </html>
