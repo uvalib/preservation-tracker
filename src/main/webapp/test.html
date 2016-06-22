@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Tracker</title>
+
+    <script src="js/jquery-2.1.3.js"></script>
+    <script src="js/jquery-ui.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/main.css">
+
+    <script type="text/javascript">
+
+        var profileList;
+
+         $(document).ready(function(){$("#search").click(function(){
+            $('#result').empty();
+            $('#result').append("Searching...");
+            $.ajax({ url: "service/item/" + $('#query').val(),
+                context: document.body,
+                success: function(json) {
+                    $('#result').empty();
+                    var result = '<dl>';
+                    for (var i = 0; i < json.length; i ++) {
+                        for (var key in json[i]) {
+                            result += getElementHtml(key, json[i][key]);
+                        }
+                    }
+                    result += '</dl>';
+                    $('#result').append($(result));
+                }});
+        });
+        });
+        
+        function getElementHtml(label, element) {
+            var result = '<dt>' + label + '</dt>';
+            if ("object" != typeof element) {
+                result += '<dd>' + element + '</dd>';
+            } else if (element.constructor === Array) {
+                if (element.length > 0 && typeof element[0] == 'string') {
+                    for (var i = 0; i < element.length; i ++) {
+                        result += '<dd>' + element[i] + '</dd>';
+                    }
+                } else { 
+                    result += '<dd><ul>';
+                    for (var i = 0; i < element.length; i ++) {
+                        result += '<li><dl>';
+                        for (var key in element[i]) {
+                            result += getElementHtml(key, element[i][key])
+                        }
+                        result += '</dl></li>';
+                    }
+                    result += '</ul></dd>';
+                }
+            } else {
+                result += '<dd><dl>';
+                for (var key in element) {
+                    result += getElementHtml(key, element);
+                }
+                result += '</dl></dd>';
+            }
+            return result;                            
+        }
+        
+    </script>
+
+</head>
+<body>
+  <div class="form">
+    <input type="text" id="query" /><button type="button" id="search">Look up ID</button>
+  </div>
+  <div class="container">
+    <div id="result" />
+  </div>
+</body>
+</html>
